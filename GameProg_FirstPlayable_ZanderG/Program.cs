@@ -5,29 +5,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace GameProg_FirstPlayable_ZanderG
 {
     internal class Program
     {
         static string map = "map.txt"; //Gets path of map
-        static string[] mapInGame = System.IO.File.ReadAllLines(map); //Makes map an array
+        static string[] mapInGame = File.ReadAllLines(map); //Makes map an array
         static int playerX = 0;
         static int playerY = 0;
         static int enemyX = 17;
         static int enemyY = 11;
-        static int playerHealth;
-        static int enemyHealth;
+        static int playerHealth = 5;
+        static int enemyHealth = 3;
+        static int goldAmount = 0;
         static bool isPlaying = true;
+        static List<(int, int)> gold = new List<(int, int)>();
         
         static void Main(string[] args)
         {
+            gold.Add((0, 5));
+            gold.Add((11, 0));
+            gold.Add((9, 17));
+            gold.Add((4, 6));
+            gold.Add((5, 14));
+            
             while (isPlaying)
             {
                 DisplayMap();
                 PlayerMovement();
                 DisplayMap();
                 enemyMovement();
+
+                if (playerHealth <= 0)
+                {
+                    isPlaying = false;
+                    Console.SetCursorPosition(0, 15);
+                    Console.WriteLine("Computer Wins!        ");
+                    Thread.Sleep(1000);
+                    Console.ReadKey(true);
+                }
+
+                if (enemyHealth <= 0)
+                {
+                    isPlaying = false;
+                    Console.SetCursorPosition(0, 15);
+                    Console.WriteLine("Player 1 Wins!        ");
+                    Thread.Sleep(1000);
+                    Console.ReadKey(true);
+                }
             }
         }
 
@@ -55,6 +82,10 @@ namespace GameProg_FirstPlayable_ZanderG
                     {
                         Console.ForegroundColor = ConsoleColor.Blue;
                     }
+                    else if (mapInGame[i][j] == '░')
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
                     else
                     {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -68,6 +99,14 @@ namespace GameProg_FirstPlayable_ZanderG
             }
 
             for (int i = 0; i < height + 2; i++) Console.Write('░');
+
+            foreach((int x, int y) in gold)
+            {
+                Console.SetCursorPosition(y+1, x+1);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write('&');
+                Console.ResetColor();
+            }
 
             Console.SetCursorPosition(playerX + 1, playerY + 1);
             Console.Write('@');
@@ -88,6 +127,9 @@ namespace GameProg_FirstPlayable_ZanderG
                 Console.SetCursorPosition(0, 15);
                 Console.WriteLine("Player 1's turn        ");
                 Console.WriteLine("WASD/Arrow Keys to move");
+                Console.WriteLine($"Player Health: {playerHealth}         ");
+                Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+                Console.WriteLine($"Gold: {goldAmount}    ");
 
                 ConsoleKey playerInput = Console.ReadKey(true).Key;
 
@@ -99,7 +141,7 @@ namespace GameProg_FirstPlayable_ZanderG
                     }
                     else
                     {
-                        if (mapInGame[playerY - 1][playerX] == '*')
+                        if (mapInGame[playerY - 1][playerX] == '*' || mapInGame[playerY - 1][playerX] == '░')
                         {
                             player1 = false;
                             playerY--;
@@ -118,7 +160,7 @@ namespace GameProg_FirstPlayable_ZanderG
                     }
                     else
                     {
-                        if (mapInGame[playerY][playerX - 1] == '*')
+                        if (mapInGame[playerY][playerX - 1] == '*' || mapInGame[playerY][playerX - 1] == '░')
                         {
                             player1 = false;
                             playerX--;
@@ -137,7 +179,7 @@ namespace GameProg_FirstPlayable_ZanderG
                     }
                     else
                     {
-                        if (mapInGame[playerY + 1][playerX] == '*')
+                        if (mapInGame[playerY + 1][playerX] == '*' || mapInGame[playerY + 1][playerX] == '░')
                         {
                             player1 = false;
                             playerY++;
@@ -156,7 +198,7 @@ namespace GameProg_FirstPlayable_ZanderG
                     }
                     else
                     {
-                        if (mapInGame[playerY][playerX + 1] == '*')
+                        if (mapInGame[playerY][playerX + 1] == '*' || mapInGame[playerY][playerX + 1] == '░')
                         {
                             player1 = false;
                             playerX++;
@@ -177,6 +219,50 @@ namespace GameProg_FirstPlayable_ZanderG
             {
                 PlayerAttack();
             }
+
+            if (mapInGame[playerY][playerX] == '░')
+            {
+                playerHealth--;
+
+                Console.SetCursorPosition(0, 15);
+                Console.WriteLine("Player stepped on Lava!          ");
+                Console.WriteLine("WASD/Arrow Keys to move");
+                Console.WriteLine($"Player Health: {playerHealth}         ");
+                Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+                Console.WriteLine($"Gold: {goldAmount}    ");
+                Thread.Sleep(1000);
+
+            }
+
+            for(int i = 0; i < gold.Count; i++)
+            {
+                if (gold.Contains((playerY, playerX)))
+                {
+                    gold.Remove((playerY, playerX));
+                    goldAmount++;
+
+                    if (goldAmount >= 5)
+                    {
+                        Console.SetCursorPosition(0, 15);
+                        Console.WriteLine("Player got gold!          ");
+                        Console.WriteLine("Damage Doubled!        ");
+                        Console.WriteLine($"Player Health: {playerHealth}         ");
+                        Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+                        Console.WriteLine($"Gold: {goldAmount}    ");
+                        Thread.Sleep(1000);
+                    }
+                    else
+                    {
+                        Console.SetCursorPosition(0, 15);
+                        Console.WriteLine("Player got gold!          ");
+                        Console.WriteLine("WASD/Arrow Keys to move");
+                        Console.WriteLine($"Player Health: {playerHealth}         ");
+                        Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+                        Console.WriteLine($"Gold: {goldAmount}    ");
+                        Thread.Sleep(1000);
+                    }
+                }
+            }
         }
 
         static void enemyMovement()
@@ -184,24 +270,27 @@ namespace GameProg_FirstPlayable_ZanderG
             Console.SetCursorPosition(0, 15);
             Console.WriteLine("Computer's turn          ");
             Console.WriteLine("WASD/Arrow Keys to move");
+            Console.WriteLine($"Player Health: {playerHealth}         ");
+            Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+            Console.WriteLine($"Gold: {goldAmount}    ");
             Thread.Sleep(1000);
 
             int targetX = playerX - enemyX;
             int targetY = playerY - enemyY;
 
-            if (targetX < 0 && mapInGame[enemyY][enemyX - 1] == '*')
+            if (targetX < 0 && mapInGame[enemyY][enemyX - 1] == '*' || targetX < 0 && mapInGame[enemyY][enemyX - 1] == '░')
             {
                 enemyX--;
             }
-            else if (targetX > 0 && mapInGame[enemyY][enemyX + 1] == '*')
+            else if (targetX > 0 && mapInGame[enemyY][enemyX + 1] == '*' || targetX > 0 && mapInGame[enemyY][enemyX + 1] == '░')
             {
                 enemyX++;
             }
-            else if (targetY < 0 && mapInGame[enemyY - 1][enemyX] == '*')
+            else if (targetY < 0 && mapInGame[enemyY - 1][enemyX] == '*' || targetY < 0 && mapInGame[enemyY - 1][enemyX] == '░')
             {
                 enemyY--;
             }
-            else if (targetY > 0 && mapInGame[enemyY + 1][enemyX] == '*')
+            else if (targetY > 0 && mapInGame[enemyY + 1][enemyX] == '*' || targetY > 0 && mapInGame[enemyY + 1][enemyX] == '░')
             {
                 enemyY++;
             }
@@ -214,30 +303,61 @@ namespace GameProg_FirstPlayable_ZanderG
 
         static void PlayerAttack()
         {
-            Console.SetCursorPosition(0, 15);
-            Console.WriteLine("Player Attacked!!!");
-            Console.WriteLine("WASD/Arrow Keys to move");
-            Thread.Sleep(1000);
-
-            
-
-            if (mapInGame[enemyY][enemyX + 5] == '*')
+            if (goldAmount >= 5)
             {
-                enemyX += 5;
-            }
-            else if (mapInGame[enemyY + 5][enemyX] == '*')
-            {
-                enemyY += 5;
-            }
-            else if (mapInGame[enemyY][enemyX - 5] == '*')
-            {
-                enemyY -= 5;
-            }
-            else if (mapInGame[enemyY - 5][enemyX] == '*')
-            {
-                enemyY -= 5;
+                enemyHealth -= 2;
             }
             else
+            {
+                enemyHealth--;
+            }
+
+
+
+
+            Console.SetCursorPosition(0, 15);
+            Console.WriteLine("Player Attacked!!!");
+            Console.WriteLine("Computer runs away!       ");
+            Console.WriteLine($"Player Health: {playerHealth}         ");
+            Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+            Console.WriteLine($"Gold: {goldAmount}    ");
+            Thread.Sleep(1000);
+
+            bool enemyEscape = false;
+
+            if (enemyX + 6 <= mapInGame[0].Length)
+            {
+                if (mapInGame[enemyY][enemyX + 5] == '*' || mapInGame[enemyY][enemyX + 5] == '░')
+                {
+                    enemyX += 5;
+                    enemyEscape = true;
+                }
+            }
+            if (enemyY + 6 <= mapInGame[1].Length && enemyEscape == false)
+            {
+                if (mapInGame[enemyY + 5][enemyX] == '*' || mapInGame[enemyY + 5][enemyX] == '░')
+                {
+                    enemyY += 5;
+                    enemyEscape = true;
+                }
+            }
+            if (enemyX - 6 >= 0 && enemyEscape == false)
+            {
+                if (mapInGame[enemyY][enemyX - 5] == '*' || mapInGame[enemyY][enemyX - 5] == '░')
+                {
+                    enemyX -= 5;
+                    enemyEscape = true;
+                }
+            }
+            if (enemyY - 6 >= 0 && enemyEscape == false)
+            {
+                if (mapInGame[enemyY - 5][enemyX] == '*' || mapInGame[enemyY - 5][enemyX] == '░')
+                {
+                    enemyY -= 5;
+                    enemyEscape = true;
+                }
+            }
+            if (enemyEscape == false)
             {
                 enemyX = 17;
                 enemyY = 11;
@@ -246,28 +366,50 @@ namespace GameProg_FirstPlayable_ZanderG
 
         static void EnemyAttack()
         {
+            playerHealth--;
             Console.SetCursorPosition(0, 15);
             Console.WriteLine("Computer Attacked!!!");
-            Console.WriteLine("WASD/Arrow Keys to move");
+            Console.WriteLine("Player runs away!          ");
+            Console.WriteLine($"Player Health: {playerHealth}         ");
+            Console.WriteLine($"Enemy Health: {enemyHealth}         ");
+            Console.WriteLine($"Gold: {goldAmount}    ");
             Thread.Sleep(1000);
 
-            if (mapInGame[playerY][playerX + 5] == '*')
+            bool playerEscape = false;
+
+            if (playerX + 5 <= mapInGame[0].Length)
             {
-                playerX += 5;
+                if (mapInGame[playerY][playerX + 5] == '*' || mapInGame[playerY][playerX + 5] == '░')
+                {
+                    playerX += 5;
+                    playerEscape = true;
+                }
             }
-            else if (mapInGame[playerY + 5][playerX] == '*')
+            if (playerY + 5 <= mapInGame[1].Length && playerEscape == false)
             {
-                playerY += 5;
+                if (mapInGame[playerY + 5][playerX] == '*' || mapInGame[playerY + 5][playerX] == '░')
+                {
+                    playerY += 5;
+                    playerEscape = true;
+                }
             }
-            else if (mapInGame[playerY][playerX - 5] == '*')
+            if (playerX - 5 >= 0 && playerEscape == false)
             {
-                playerY -= 5;
+                if (mapInGame[playerY][playerX - 5] == '*' || mapInGame[playerY][playerX - 5] == '░')
+                {
+                    playerY -= 5;
+                    playerEscape = true;
+                }
             }
-            else if (mapInGame[playerY - 5][playerX] == '*')
+            if (enemyY - 5 >= 0 && playerEscape == false)
             {
-                playerY -= 5;
+                if (mapInGame[playerY - 5][playerX] == '*' || mapInGame[playerY - 5][playerX] == '░')
+                {
+                    playerY -= 5;
+                    playerEscape = true;
+                }
             }
-            else
+            if (playerEscape == false)
             {
                 playerX = 0;
                 playerY = 0;
